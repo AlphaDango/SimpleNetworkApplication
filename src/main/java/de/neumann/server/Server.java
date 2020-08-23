@@ -1,8 +1,6 @@
 package de.neumann.server;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Scanner;
@@ -16,6 +14,7 @@ public class Server {
 
     private final int port;
     private boolean isRunning;
+    private Socket remoteClientSocket;
 
     public Server(int port){
         this.port = port;
@@ -30,12 +29,21 @@ public class Server {
                 System.out.println("[SERVER] Status: Server is running");
                 break;
             default:
-                System.out.println("[SERVER] Message from Client: " + message);
+                System.out.println("[CLIENT] Message from Client: " + message);
         }
     }
 
-    public void stopServer(){
-        isRunning = false;
+    public void stopServer() {
+        try{
+            isRunning = false;
+            PrintWriter printWriter = new PrintWriter(
+                    new OutputStreamWriter(remoteClientSocket.getOutputStream()));
+            printWriter.println("[SERVER] Server closed");
+            printWriter.flush();
+            printWriter.close();
+        } catch (IOException e){
+            e.printStackTrace();
+        }
     }
 
     public void startListening(){
@@ -46,7 +54,7 @@ public class Server {
                 try {
                     ServerSocket serverSocket = new ServerSocket(port);
                     System.out.println("[SERVER] Waiting for connection...");
-                    Socket remoteClientSocket = serverSocket.accept();
+                    remoteClientSocket = serverSocket.accept();
                     System.out.println("[SERVER] Client connected with remote address " + remoteClientSocket.getRemoteSocketAddress());
 
                     Scanner scanner = new Scanner(
